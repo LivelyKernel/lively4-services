@@ -1,0 +1,26 @@
+{
+  "name": "lively4-services",
+  "version": "1.0.0",
+  "description": "Services for LivelyKernel",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/LivelyKernel/lively4-services.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/LivelyKernel/lively4-services/issues"
+  },
+  "homepage": "https://github.com/LivelyKernel/lively4-services",
+  "dependencies": {
+    "node-inspector": "^0.12.8",
+    "bluebird": "^3.1.1"
+  }
+}
+
+
