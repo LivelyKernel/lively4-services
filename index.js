@@ -4,15 +4,18 @@ var port = 8000;
 
 
 http.createServer(function(req, res) {
-  ServiceManager.createScript("testScript.js", "setInterval(function() {console.log('test'); }, 1000 );");
-  var pid = ServiceManager.spawnProcess("testScript.js");
-  ServiceManager.startDebugServer();
-  setTimeout(
-    ServiceManager.killProcess.bind(ServiceManager, pid),
-    5000
-  );
+  if (req.method == "GET" && req.url === "/") {
+    ServiceManager.createScript("testScript.js", "setInterval(function() {console.log('test'); }, 1000 );");
+    var pid = ServiceManager.spawnProcess("testScript.js");
+    ServiceManager.startDebugServer();
 
-
+    setTimeout(
+      function() {
+        ServiceManager.killProcess(pid),
+        ServiceManager.shutdownDebugServer();
+      }, 5000
+    );
+  }
   res.writeHead(200, {
     'content-type': 'text/plain'
   });
