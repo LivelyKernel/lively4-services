@@ -44,7 +44,8 @@ http.createServer(function(req, res) {
         body = Buffer.concat(body).toString();
         try {
           var service = JSON.parse(body);
-          ServiceManager.createScript(service.name, service.code);
+          ServiceManager.createScript(service.name + ".js", service.code);
+          ServiceManager.spawnProcess(service.name + ".js");
           return plainResponse(res, service.name + ' started');
         } catch (ex) {
           console.error(ex);

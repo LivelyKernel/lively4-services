@@ -35,6 +35,14 @@ var ServiceManager = {
       detached: true
     });
 
+    childProcesses[child.pid] = child;
+    services[child.pid] = {
+      name: scriptName,
+      status: 1,
+      start: new Date().getTime(),
+      kill: -1
+    };
+
     child.stdout.on('data', function (data) {
       fs.appendFile(logFile, data.toString(), function (err) {
         if (err) throw err;
@@ -50,15 +58,11 @@ var ServiceManager = {
     });
 
     child.on('close', function(exit_code) {
+      services[child.pid].status = 0;
+      services[child.pid].kill = new Date().getTime();
       console.log('Closed before stop: Closing code: ', exit_code);
     });
-    childProcesses[child.pid] = child;
-    services[child.pid] = {
-      name: scriptName,
-      status: 1,
-      start: new Date().getTime(),
-      kill: -1
-    };
+    
     return child.pid;
   },
   killProcess: function(pid) {
