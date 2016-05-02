@@ -30,13 +30,22 @@ var ServiceManager = {
   spawnProcess: function(scriptName) {
     console.log("spawn the shell");
     var scriptPath = scriptsDir + "/" + scriptName;
-    var child = spawn("node", ["--debug", scriptPath, ">",  scriptPath + ".out"], {shell: true});
+    var logFile = scriptPath + ".out";
+    var child = spawn("node", ["--debug", scriptPath], {
+      detached: true
+    });
 
     child.stdout.on('data', function (data) {
+      fs.appendFile(logFile, data.toString(), function (err) {
+        if (err) throw err;
+      });
       console.log(child.pid, data.toString());
     });
 
     child.stderr.on('data', function (data) {
+      fs.appendFile(logFile, data.toString(), function (err) {
+        if (err) throw err;
+      });
       console.log(child.pid, data.toString());
     });
 
