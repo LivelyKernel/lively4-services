@@ -4,10 +4,14 @@ var fs = require('fs');
 
 var scriptsDir = './scripts';
 
+var services = {};
 var childProcesses = {};
 var debugServerChild = null;
 
 var ServiceManager = {
+  listProcesses: function() {
+    return services;
+  },
   createScript: function(scriptName, fileContent, cb) {
     if (!fs.existsSync(scriptsDir)){
       fs.mkdirSync(scriptsDir);
@@ -40,6 +44,10 @@ var ServiceManager = {
       console.log('Closed before stop: Closing code: ', exit_code);
     });
     childProcesses[child.pid] = child;
+    services[child.pid] = {
+      name: scriptName,
+      status: 1
+    };
     return child.pid;
   },
   killProcess: function(pid) {
@@ -47,6 +55,9 @@ var ServiceManager = {
     if (child) {
       console.log("kill process");
       child.kill('SIGKILL');
+      if (pid in services) {
+        services[pid].status = 0;
+      }
     }
   },
   startDebugServer: function() {
@@ -55,8 +66,8 @@ var ServiceManager = {
       return;
     }
     console.log("run inspectorPath");
-    var inspectorPath = "./node_modules/node-inspector/bin/inspector.js"
-    debugServerChild = spawn("node", [inspectorPath]);
+    var inspectorPath = "./node_modules/node-inspector/bin/inspector.js";
+    debugServerChild = spawn("node", [inspectorPath, "--debug-port", "9008"]);
     var child = debugServerChild;
     child.stdout.on('data', function (data) {
       console.log(child.pid, data.toString());
@@ -77,6 +88,6 @@ var ServiceManager = {
       debugServerChild = null;
     }
   }
-}
+};
 
 module.exports = ServiceManager;
