@@ -30,7 +30,7 @@ var ServiceManager = {
   spawnProcess: function(scriptName) {
     console.log("spawn the shell");
     var scriptPath = scriptsDir + "/" + scriptName;
-    var child = spawn("node --debug " + scriptPath + " > " + scriptPath + ".out", [], {shell: true});
+    var child = spawn("node", ["--debug", scriptPath, ">",  scriptPath + ".out"], {shell: true});
 
     child.stdout.on('data', function (data) {
       console.log(child.pid, data.toString());
