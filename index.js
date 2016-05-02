@@ -1,4 +1,5 @@
 var http = require("http");
+var url = require('url');
 var ServiceManager = require("./service_manager");
 var port = 9007;
 
@@ -34,6 +35,12 @@ http.createServer(function(req, res) {
       return plainResponse(res, 'stopped');
     } else if (req.url === "/list") {
       return jsonResponse(res, ServiceManager.listProcesses());
+    } else if (req.url.startsWith("/get")) {
+      var url_parts = url.parse(req.url, true);
+      var query = url_parts.query;
+      if ('pid' in query) {
+        return jsonResponse(res, ServiceManager.getProcessInfo(query.pid));
+      }
     }
   } else if (req.method == "POST") {
     var body = [];

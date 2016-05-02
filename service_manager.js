@@ -12,6 +12,16 @@ var ServiceManager = {
   listProcesses: function() {
     return services;
   },
+  getProcessInfo: function(pid) {
+    if (pid in services) {
+      return {
+        service: services[pid],
+        code: fs.readFileSync(this.getFilepath(services[pid].name), "utf8"),
+        log: fs.readFileSync(this.getFilepath(services[pid].name + ".out"), "utf8")
+      };
+    }
+    return {error: 'not found'};
+  },
   createScript: function(scriptName, fileContent, cb) {
     if (!fs.existsSync(scriptsDir)){
       fs.mkdirSync(scriptsDir);
@@ -27,9 +37,12 @@ var ServiceManager = {
       }
     });
   },
+  getFilepath: function(scriptName) {
+    return scriptsDir + "/" + scriptName;
+  },
   spawnProcess: function(scriptName) {
     console.log("spawn the shell");
-    var scriptPath = scriptsDir + "/" + scriptName;
+    var scriptPath = this.getFilepath(scriptName);
     var logFile = scriptPath + ".out";
     var child = spawn("node", ["--debug", scriptPath], {
       detached: true
