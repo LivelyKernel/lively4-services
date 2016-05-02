@@ -35,7 +35,7 @@ http.createServer(function(req, res) {
       return plainResponse(res, 'stopped');
     } else if (req.url === "/list") {
       return jsonResponse(res, ServiceManager.listProcesses());
-    } else if (req.url.startsWith("/get")) {
+    } else if (req.url.indexOf("/get") === 0) {
       var url_parts = url.parse(req.url, true);
       var query = url_parts.query;
       if ('pid' in query) {
