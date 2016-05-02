@@ -1,5 +1,6 @@
 var http = require("http");
 var url = require('url');
+var qs = require('querystring');
 var ServiceManager = require("./service_manager");
 var port = 9007;
 
@@ -41,6 +42,8 @@ http.createServer(function(req, res) {
       if ('pid' in query) {
         return jsonResponse(res, ServiceManager.getProcessInfo(query.pid));
       }
+    } else {
+      return plainResponse(res, 'failed get');
     }
   } else if (req.method == "POST") {
     var body = [];
@@ -66,15 +69,17 @@ http.createServer(function(req, res) {
         try {
           var service = JSON.parse(body);
           ServiceManager.killProcess(service.pid);
-          return plainResponse(res, service.name + ' killed');
+          return plainResponse(res, 'killed');
         } catch (ex) {
           console.error(ex);
         }
-     });
+      });
+    } else {
+      return plainResponse(res, 'failed post');
     }
+  } else {
+    return plainResponse(res, 'failed');
   }
-
-  return plainResponse(res, 'fail');
 
 }).listen(port, function(err) {
   if (err) {
