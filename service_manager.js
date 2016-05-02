@@ -55,7 +55,9 @@ var ServiceManager = {
     childProcesses[child.pid] = child;
     services[child.pid] = {
       name: scriptName,
-      status: 1
+      status: 1,
+      start: new Date().getTime(),
+      kill: -1
     };
     return child.pid;
   },
@@ -66,6 +68,7 @@ var ServiceManager = {
       child.kill('SIGKILL');
       if (pid in services) {
         services[pid].status = 0;
+        services[pid].kill = new Date().getTime();
       }
     }
   },
