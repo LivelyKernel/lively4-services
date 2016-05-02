@@ -74,6 +74,19 @@ http.createServer(function(req, res) {
           console.error(ex);
         }
       });
+    } else if (req.url === "/remove") {
+      req.on('data', function(chunk) {
+        body.push(chunk);
+      }).on('end', function() {
+        body = Buffer.concat(body).toString();
+        try {
+          var service = JSON.parse(body);
+          ServiceManager.removeProcess(service.pid);
+          return plainResponse(res, 'removed');
+        } catch (ex) {
+          console.error(ex);
+        }
+      });
     } else {
       return plainResponse(res, 'failed post');
     }

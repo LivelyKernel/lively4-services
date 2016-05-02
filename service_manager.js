@@ -89,6 +89,15 @@ var ServiceManager = {
       }
     }
   },
+  removeProcess: function(pid) {
+    if (pid in services) {
+      if (pid in childProcesses) {
+        this.killProcess(pid);
+      }
+      delete services[pid];
+    }
+    return false;
+  },
   startDebugServer: function() {
     if (debugServerChild) {
       console.log("Debug server was already started.");
