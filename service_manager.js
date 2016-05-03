@@ -105,7 +105,7 @@ var ServiceManager = {
     }
     console.log("run inspectorPath");
     var inspectorPath = "./node_modules/node-inspector/bin/inspector.js";
-    debugServerChild = spawn("node", [inspectorPath, "--debug-port", "9008"]);
+    debugServerChild = spawn("node", [inspectorPath, "--web-port", "9008", "--save-live-edit", "true"]);
     var child = debugServerChild;
     child.stdout.on('data', function (data) {
       console.log(child.pid, data.toString());
