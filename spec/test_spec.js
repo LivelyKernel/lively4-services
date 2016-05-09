@@ -27,7 +27,7 @@ describe('Server', function() {
     request.get(
       route + '/start',
       function (error, response, body) {
-        expect(body).toBe('started');
+        expect(JSON.parse(body)).toEqual({ status: 'success' });
         done();
       }
     );
@@ -60,7 +60,7 @@ describe('Server', function() {
         json: true
       },
       function (error, response, body) {
-        expect(body).toBe('killed');
+        expect(body).toEqual({ status: 'success' });
         done();
       }
     );
@@ -75,7 +75,7 @@ describe('Server', function() {
         json: true
       },
       function (error, response, body) {
-        expect(body).toBe(scriptName + ' started');
+        expect(body).toEqual({ status: 'success' });
         done();
       }
     );

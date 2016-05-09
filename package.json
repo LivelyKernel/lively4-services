@@ -19,6 +19,7 @@
   "homepage": "https://github.com/LivelyKernel/lively4-services",
   "dependencies": {
     "bluebird": "^3.1.1",
+    "body-parser": "^1.15.1",
     "express": "^4.13.4",
     "express-http-proxy": "^0.6.0",
     "lively4-server": "git://github.com/LivelyKernel/lively4-server.git",

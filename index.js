@@ -1,3 +1,4 @@
+var bodyParser = require('body-parser');
 var childProcess = require('child_process');
 var express = require('express');
 var fs = require('fs');
@@ -11,7 +12,9 @@ var app = express();
 
 function start(cb) {
   app.get('/', function(req, res) {
-    res.send('' + LIVELY_SERVER.pid);
+    res.json({
+      status: 'running'
+    });
   });
 
   app.use('/lively', proxy('localhost:' + LIVELY_SERVER_PORT, {
@@ -19,6 +22,9 @@ function start(cb) {
       return require('url').parse(req.url).path;
     }
   }));
+
+  // Parse JSON data in body
+  app.use(bodyParser());
 
   // CORS middleware
   app.use(function(req, res, next) {
@@ -33,7 +39,7 @@ function start(cb) {
     ServiceManager.createScript('testScript.js', 'setInterval(function() {console.log("test"); }, 1000 );');
     ServiceManager.spawnProcess('testScript.js');
     ServiceManager.startDebugServer();
-    return res.send('started');
+    return res.json({ status: 'success' });
   });
   app.get('/stop', function(req, res) {
     ServiceManager.shutdownDebugServer();
@@ -55,51 +61,22 @@ function start(cb) {
   });
 
   app.post('/start', function(req, res) {
-    var body = [];
-    console.log('post to start');
-    req.on('data', function(chunk) {
-      body.push(chunk);
-    }).on('end', function() {
-      body = Buffer.concat(body).toString();
-      try {
-        var service = JSON.parse(body);
-        ServiceManager.createScript(service.name, service.code);
-        ServiceManager.spawnProcess(service.name);
-        return res.send(service.name + ' started');
-      } catch (ex) {
-        console.error(ex);
-      }
-    });
+    var service = req.body;
+    ServiceManager.createScript(service.name, service.code);
+    ServiceManager.spawnProcess(service.name);
+    return res.json({ status: 'success' });
   });
+
   app.post('/stop', function(req, res) {
-    var body = [];
-    req.on('data', function(chunk) {
-      body.push(chunk);
-    }).on('end', function() {
-      body = Buffer.concat(body).toString();
-      try {
-        var service = JSON.parse(body);
-        ServiceManager.killProcess(service.serviceName);
-        return res.send('killed');
-      } catch (ex) {
-        console.error(ex);
-      }
-    });
+    var service = req.body;
+    ServiceManager.killProcess(service.serviceName);
+    return res.json({ status: 'success' });
   });
+  
   app.post('/delete', function(req, res) {
-    var body = [];
-    req.on('data', function(chunk) {
-      body.push(chunk);
-    }).on('end', function() {
-      body = Buffer.concat(body).toString();
-      try {
-        var service = JSON.parse(body);
-        ServiceManager.removeProcess(service.name);
-        return res.send('removed');
-      } catch (ex) {
-        console.error(ex);
-      }
-    });
+    var service = req.body;
+    ServiceManager.removeProcess(service.name);
+    return res.send('removed');
   });
 
   function startLivelyServerInBackground() {
@@ -132,7 +109,7 @@ function start(cb) {
       cb();
     }
   });
-};
+}
 
 
 if (!module.parent) {
