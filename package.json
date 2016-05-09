@@ -4,8 +4,8 @@
   "description": "Services for LivelyKernel",
   "main": "index.js",
   "scripts": {
-    "test": "jasmine",
-    "start": "node index.js"
+    "start": "node index.js",
+    "test": "jasmine-node spec/"
   },
   "repository": {
     "type": "git",
@@ -25,5 +25,8 @@
     "node-inspector": "^0.12.8",
     "rimraf": "^2.5.2",
     "url": "^0.11.0"
+  },
+  "devDependencies": {
+    "jasmine-node": ">=1.14.5"
   }
 }
