@@ -24,7 +24,7 @@ function start(cb) {
   }));
 
   // Parse JSON data in body
-  app.use(bodyParser());
+  app.use(bodyParser.json());
 
   // CORS middleware
   app.use(function(req, res, next) {
