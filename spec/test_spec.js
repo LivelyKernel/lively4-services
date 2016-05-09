@@ -46,7 +46,7 @@ describe("Server", function() {
     );
   });
 
-  it("starts test script", function(done) {
+  it("starts and kills test script", function(done) {
     function getRunningPid(cb) {
       request.get(
         route + '/list',
