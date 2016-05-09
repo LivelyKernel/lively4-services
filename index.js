@@ -1,14 +1,20 @@
-var http = require("http");
+var http = require('http');
 var url = require('url');
 var qs = require('querystring');
-var ServiceManager = require("./service_manager");
+var ServiceManager = require('./service_manager');
 var port = 9007;
 
 function jsonResponse(res, obj) {
   res.writeHead(200, {
     'content-type': 'application/json'
   });
-  res.end(JSON.stringify(obj));
+  var response = JSON.stringify(obj, function(k, v) {
+    if (k === "child") {
+      return undefined;
+    }
+    return v;
+  });
+  res.end(response);
 }
 
 function plainResponse(res, msg) {
@@ -26,63 +32,64 @@ function start(cb) {
     res.setHeader('Access-Control-Allow-Methods', 'OPTIONS, GET');
     res.setHeader('Access-Control-Allow-Headers', '*');
 
-    if (req.method == "GET") {
-      if (req.url === "/start") {
-        ServiceManager.createScript("testScript.js", "setInterval(function() {console.log('test'); }, 1000 );");
-        ServiceManager.spawnProcess("testScript.js");
+    if (req.method == 'GET') {
+      if (req.url === '/start') {
+        ServiceManager.createScript('testScript.js', 'setInterval(function() {console.log("test"); }, 1000 );');
+        ServiceManager.spawnProcess('testScript.js');
         ServiceManager.startDebugServer();
         return plainResponse(res, 'started');
-      } else if (req.url === "/stop") {
+      } else if (req.url === '/stop') {
         ServiceManager.shutdownDebugServer();
         return plainResponse(res, 'stopped');
-      } else if (req.url === "/list") {
+      } else if (req.url === '/list') {
         return jsonResponse(res, ServiceManager.listProcesses());
-      } else if (req.url.indexOf("/get") === 0) {
+      } else if (req.url.indexOf('/get') === 0) {
         var url_parts = url.parse(req.url, true);
         var query = url_parts.query;
-        if ('pid' in query) {
-          return jsonResponse(res, ServiceManager.getProcessInfo(query.pid));
+        if (query.serviceName) {
+          return jsonResponse(res, ServiceManager.getProcessInfo(query.serviceName));
         }
       } else {
         return plainResponse(res, 'failed get');
       }
-    } else if (req.method == "POST") {
+    } else if (req.method == 'POST') {
       var body = [];
-      if (req.url === "/start") {
+      if (req.url === '/start') {
+        console.log('post to start');
         req.on('data', function(chunk) {
           body.push(chunk);
         }).on('end', function() {
           body = Buffer.concat(body).toString();
           try {
             var service = JSON.parse(body);
-            ServiceManager.createScript(service.name + ".js", service.code);
-            ServiceManager.spawnProcess(service.name + ".js");
+            ServiceManager.createScript(service.name, service.code);
+            ServiceManager.spawnProcess(service.name);
             return plainResponse(res, service.name + ' started');
           } catch (ex) {
             console.error(ex);
           }
         });
-      } else if (req.url === "/stop") {
+      } else if (req.url === '/stop') {
         req.on('data', function(chunk) {
           body.push(chunk);
         }).on('end', function() {
           body = Buffer.concat(body).toString();
           try {
             var service = JSON.parse(body);
-            ServiceManager.killProcess(service.pid);
+            ServiceManager.killProcess(service.serviceName);
             return plainResponse(res, 'killed');
           } catch (ex) {
             console.error(ex);
           }
         });
-      } else if (req.url === "/remove") {
+      } else if (req.url === '/delete') {
         req.on('data', function(chunk) {
           body.push(chunk);
         }).on('end', function() {
           body = Buffer.concat(body).toString();
           try {
             var service = JSON.parse(body);
-            ServiceManager.removeProcess(service.pid);
+            ServiceManager.removeProcess(service.name);
             return plainResponse(res, 'removed');
           } catch (ex) {
             console.error(ex);
@@ -99,13 +106,12 @@ function start(cb) {
     if (err) {
       throw err;
     }
-    console.log("Server running on port " + port);
+    console.log('Server running on port ' + port);
     if (cb) {
       cb();
     }
   });
 }
-
 
 if (!module.parent) {
   // the script was directly executed

@@ -1,33 +1,34 @@
 var childProcess = require('child_process');
 var spawn = childProcess.spawn;
 var fs = require('fs');
-
-var scriptsDir = './scripts';
+var rimraf = require('rimraf');
+var servicesDir = './services';
+var logsDir = './logs';
 
 var services = {};
-var childProcesses = {};
 var debugServerChild = null;
 
 var ServiceManager = {
   listProcesses: function() {
     return services;
   },
-  getProcessInfo: function(pid) {
-    if (pid in services) {
-      return {
-        service: services[pid],
-        code: fs.readFileSync(this.getFilepath(services[pid].name), "utf8"),
-        log: fs.readFileSync(this.getFilepath(services[pid].name + ".out"), "utf8")
-      };
-    }
-    return {error: 'not found'};
+  getProcessInfo: function(serviceName) {
+    return {
+      service: services[serviceName],
+      code: fs.readFileSync(servicesDir + serviceName, "utf8"),
+      log: fs.readFileSync(logsDir + "/" + serviceName + "/stdout.log", "utf8")
+    };
   },
-  createScript: function(scriptName, fileContent, cb) {
-    if (!fs.existsSync(scriptsDir)){
-      fs.mkdirSync(scriptsDir);
+  createScript: function(serviceName, fileContent, cb) {
+    if (!fs.existsSync(servicesDir)){
+      fs.mkdirSync(servicesDir);
+    }
+    if (!fs.existsSync(logsDir)){
+      fs.mkdirSync(logsDir);
     }
 
-    fs.writeFile(scriptsDir + "/" + scriptName, fileContent, function(err) {
+    fs.mkdirSync(servicesDir + "/" + serviceName);
+    fs.writeFile(servicesDir + "/" + serviceName + "/index.js", fileContent, function(err) {
       if (err) {
         return console.error(err);
       }
@@ -37,23 +38,23 @@ var ServiceManager = {
       }
     });
   },
-  getFilepath: function(scriptName) {
-    return scriptsDir + "/" + scriptName;
+  getFilepath: function(serviceName) {
+    return servicesDir + "/" + serviceName;
   },
-  spawnProcess: function(scriptName) {
+  spawnProcess: function(serviceName) {
     console.log("spawn the shell");
-    var scriptPath = this.getFilepath(scriptName);
-    var logFile = scriptPath + ".out";
+    var scriptPath = this.getFilepath(serviceName);
+    var logFile = logsDir + "/" + serviceName + ".out";
     var child = spawn("node", ["--debug", scriptPath], {
       detached: true
     });
 
-    childProcesses[child.pid] = child;
-    services[child.pid] = {
-      name: scriptName,
+    services[serviceName] = {
+      name: serviceName,
       status: 1,
       start: new Date().getTime(),
-      kill: -1
+      kill: -1,
+      child: child
     };
 
     child.stdout.on('data', function (data) {
@@ -71,32 +72,34 @@ var ServiceManager = {
     });
 
     child.on('close', function(exit_code) {
-      services[child.pid].status = 0;
-      services[child.pid].kill = new Date().getTime();
+      var runningService = services[serviceName];
+      if (runningService) {
+        runningService.status = 0;
+        runningService.kill = new Date().getTime();
+      }
+
       console.log('Closed before stop: Closing code: ', exit_code);
     });
-    
+
     return child.pid;
   },
-  killProcess: function(pid) {
-    var child = childProcesses[pid];
-    if (child) {
+  killProcess: function(serviceName) {
+    var runningService = services[serviceName];
+    if (runningService) {
       console.log("kill process");
-      child.kill('SIGKILL');
-      if (pid in services) {
-        services[pid].status = 0;
-        services[pid].kill = new Date().getTime();
-      }
+      runningService.child.kill('SIGKILL');
+      runningService.status = 0;
+      runningService.kill = new Date().getTime();
     }
   },
-  removeProcess: function(pid) {
-    if (pid in services) {
-      if (pid in childProcesses) {
-        this.killProcess(pid);
-      }
-      delete services[pid];
+  removeProcess: function(serviceName) {
+    var runningService = services[serviceName];
+    if (runningService) {
+      this.killProcess(serviceName);
+      delete services[serviceName];
     }
-    return false;
+    // TODO make async
+    rimraf(servicesDir + "/serviceName", function() {});
   },
   startDebugServer: function() {
     if (debugServerChild) {
