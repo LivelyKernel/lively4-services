@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "jasmine-node spec/"
+    "test": "./node_modules/jasmine/bin/jasmine.js"
   },
   "repository": {
     "type": "git",
@@ -23,10 +23,11 @@
     "express-http-proxy": "^0.6.0",
     "lively4-server": "git://github.com/LivelyKernel/lively4-server.git",
     "node-inspector": "^0.12.8",
+    "request": "^2.72.0",
     "rimraf": "^2.5.2",
     "url": "^0.11.0"
   },
   "devDependencies": {
-    "jasmine-node": ">=1.14.5"
+    "jasmine": "^2.4.1"
   }
 }
