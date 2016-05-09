@@ -62,9 +62,12 @@ describe("Server", function() {
 
     function kill(pid) {
       done();
-      request.post(
-        route + '/stop',
-        JSON.stringify({pid: pid}),
+      request({
+          url: route + '/stop',
+          method: 'post',
+          body: {pid: pid},
+          json: true
+        },
         function (error, response, body) {
           expect(body).toBe("killed");
           done();
@@ -73,5 +76,20 @@ describe("Server", function() {
     };
 
     getRunningPid(kill);
+  });
+
+  it("creates new script", function(done) {
+    var scriptName = "createdScript.js";
+    request({
+        url: route + '/start',
+        method: 'post',
+        body: { name: scriptName, code: "console.log('test');" },
+        json: true
+      },
+      function (error, response, body) {
+        expect(body).toBe(scriptName + " started");
+        done();
+      }
+    );
   });
 });
