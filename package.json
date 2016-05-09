@@ -21,7 +21,7 @@
     "bluebird": "^3.1.1",
     "express": "^4.13.4",
     "express-http-proxy": "^0.6.0",
-    "lively4-server": "LivelyKernel/lively4-server",
+    "lively4-server": "git://github.com/LivelyKernel/lively4-server.git",
     "node-inspector": "^0.12.8",
     "url": "^0.11.0"
   }
