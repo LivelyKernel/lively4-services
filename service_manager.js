@@ -15,8 +15,8 @@ var ServiceManager = {
   getProcessInfo: function(serviceName) {
     return {
       service: services[serviceName],
-      code: fs.readFileSync(servicesDir + serviceName, "utf8"),
-      log: fs.readFileSync(logsDir + "/" + serviceName + "/stdout.log", "utf8")
+      code: fs.readFileSync(servicesDir + serviceName, 'utf8'),
+      log: fs.readFileSync(logsDir + '/' + serviceName + '/stdout.log', 'utf8')
     };
   },
   createScript: function(serviceName, fileContent, cb) {
@@ -108,7 +108,7 @@ var ServiceManager = {
     }
     console.log("run inspectorPath");
     var inspectorPath = "./node_modules/node-inspector/bin/inspector.js";
-    debugServerChild = spawn("node", [inspectorPath, "--web-port", "9008", "--save-live-edit", "true"]);
+    debugServerChild = spawn('node', [inspectorPath, '--web-port', '9008', '--save-live-edit', 'true']);
     var child = debugServerChild;
     child.stdout.on('data', function (data) {
       console.log(child.pid, data.toString());
@@ -124,7 +124,7 @@ var ServiceManager = {
   },
   shutdownDebugServer: function() {
     if (debugServerChild) {
-      console.log("kill debug server");
+      console.log('kill debug server');
       debugServerChild.kill('SIGKILL');
       debugServerChild = null;
     }

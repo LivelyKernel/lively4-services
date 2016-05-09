@@ -10,7 +10,7 @@ describe('Server', function() {
   });
 
   afterAll(function(done) {
-    rimraf("./services", done);
+    rimraf('./services', done);
   })
 
   it('gets empty list', function(done) {
@@ -37,7 +37,7 @@ describe('Server', function() {
     request.get(
       route + '/list',
       function (error, response, body) {
-        console.log("body",  body)
+        console.log('body', body)
         var json = JSON.parse(body);
         var pids = Object.keys(json);
         expect(pids.length).toBe(1);
