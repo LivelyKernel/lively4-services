@@ -2,9 +2,7 @@ var childProcess = require('child_process');
 var spawn = childProcess.spawn;
 var fs = require('fs');
 var rimraf = require('rimraf');
-var servicesDir = './services';
-var logsDir = './logs';
-
+var config = require('./config');
 var services = {};
 var debugServerChild = null;
 
@@ -15,20 +13,20 @@ var ServiceManager = {
   getProcessInfo: function(serviceName) {
     return {
       service: services[serviceName],
-      code: fs.readFileSync(servicesDir + serviceName, 'utf8'),
-      log: fs.readFileSync(logsDir + '/' + serviceName + '/stdout.log', 'utf8')
+      code: fs.readFileSync(config.servicesDir + serviceName, 'utf8'),
+      log: fs.readFileSync(config.logsDir + '/' + serviceName + '/stdout.log', 'utf8')
     };
   },
   createScript: function(serviceName, fileContent, cb) {
-    if (!fs.existsSync(servicesDir)){
-      fs.mkdirSync(servicesDir);
+    if (!fs.existsSync(config.servicesDir)){
+      fs.mkdirSync(config.servicesDir);
     }
-    if (!fs.existsSync(logsDir)){
-      fs.mkdirSync(logsDir);
+    if (!fs.existsSync(config.logsDir)){
+      fs.mkdirSync(config.logsDir);
     }
 
-    fs.mkdirSync(servicesDir + "/" + serviceName);
-    fs.writeFile(servicesDir + "/" + serviceName + "/index.js", fileContent, function(err) {
+    fs.mkdirSync(config.servicesDir + "/" + serviceName);
+    fs.writeFile(config.servicesDir + "/" + serviceName + "/index.js", fileContent, function(err) {
       if (err) {
         return console.error(err);
       }
@@ -39,12 +37,12 @@ var ServiceManager = {
     });
   },
   getFilepath: function(serviceName) {
-    return servicesDir + "/" + serviceName;
+    return config.servicesDir + "/" + serviceName;
   },
   spawnProcess: function(serviceName) {
     console.log("spawn the shell");
     var scriptPath = this.getFilepath(serviceName);
-    var logFile = logsDir + "/" + serviceName + ".out";
+    var logFile = config.logsDir + "/" + serviceName + ".out";
     var child = spawn("node", ["--debug", scriptPath], {
       detached: true
     });
@@ -92,14 +90,13 @@ var ServiceManager = {
       runningService.kill = new Date().getTime();
     }
   },
-  removeProcess: function(serviceName) {
+  removeProcess: function(serviceName, cb) {
     var runningService = services[serviceName];
     if (runningService) {
       this.killProcess(serviceName);
       delete services[serviceName];
     }
-    // TODO make async
-    rimraf(servicesDir + "/serviceName", function() {});
+    rimraf(config.servicesDir + "/serviceName", cb);
   },
   startDebugServer: function() {
     if (debugServerChild) {
@@ -108,7 +105,10 @@ var ServiceManager = {
     }
     console.log("run inspectorPath");
     var inspectorPath = "./node_modules/node-inspector/bin/inspector.js";
-    debugServerChild = spawn('node', [inspectorPath, '--web-port', '9008', '--save-live-edit', 'true']);
+    debugServerChild = spawn(
+      'node',
+      [inspectorPath, '--web-port', config.NODE_INSPECTOR_WEB_PORT, '--save-live-edit', 'true']
+    );
     var child = debugServerChild;
     child.stdout.on('data', function (data) {
       console.log(child.pid, data.toString());

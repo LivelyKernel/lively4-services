@@ -5,10 +5,30 @@ var fs = require('fs');
 var proxy = require('express-http-proxy');
 var spawn = childProcess.spawn;
 var ServiceManager = require('./service_manager');
-var PORT = 9007;
-var LIVELY_SERVER = null;
-var LIVELY_SERVER_PORT = 8901;
 var app = express();
+var config = require('./config');
+
+function startLivelyServerInBackground() {
+  var livelyServerPath = './node_modules/lively4-server/httpServer.js';
+
+  if (!fs.existsSync(config.logsDir)){
+    fs.mkdirSync(config.logsDir);
+  }
+
+  out = fs.openSync('./logs/lively-server.log', 'a');
+  err = fs.openSync('./logs/lively-server.log', 'a');
+
+  LIVELY_SERVER = spawn('node', [
+    livelyServerPath,
+    '--port=' + config.LIVELY_SERVER_PORT,
+    '--directory=services'],
+  {
+    stdio: [ 'ignore', out, err ]
+  });
+
+  console.log('lively-server (#' + LIVELY_SERVER.pid + ') is listenting on ' +
+              config.LIVELY_SERVER_PORT + '...');
+}
 
 function start(cb) {
   app.get('/', function(req, res) {
@@ -17,7 +37,7 @@ function start(cb) {
     });
   });
 
-  app.use('/lively', proxy('localhost:' + LIVELY_SERVER_PORT, {
+  app.use('/lively', proxy('localhost:' + config.LIVELY_SERVER_PORT, {
     forwardPath: function(req, res) {
       return require('url').parse(req.url).path;
     }
@@ -72,39 +92,17 @@ function start(cb) {
     ServiceManager.killProcess(service.serviceName);
     return res.json({ status: 'success' });
   });
-  
+
   app.post('/delete', function(req, res) {
     var service = req.body;
-    ServiceManager.removeProcess(service.name);
-    return res.send('removed');
+    ServiceManager.removeProcess(service.name, function(err) {
+      return res.send('removed');
+    });
   });
 
-  function startLivelyServerInBackground() {
-    var livelyServerPath = './node_modules/lively4-server/httpServer.js';
-
-    var logsDir = './logs';
-    if (!fs.existsSync(logsDir)){
-      fs.mkdirSync(logsDir);
-    }
-
-    out = fs.openSync('./logs/lively-server.log', 'a');
-    err = fs.openSync('./logs/lively-server.log', 'a');
-
-    LIVELY_SERVER = spawn('node', [
-      livelyServerPath,
-      '--port=' + LIVELY_SERVER_PORT,
-      '--directory=services'],
-    {
-      stdio: [ 'ignore', out, err ]
-    });
-
-    console.log('lively-server (#' + LIVELY_SERVER.pid + ') is listenting on ' +
-                LIVELY_SERVER_PORT + '...');
-  }
-
-  app.listen(PORT, function () {
+  app.listen(config.PORT, function () {
     startLivelyServerInBackground();
-    console.log('Listening on port ' + PORT + '...');
+    console.log('Listening on port ' + config.PORT + '...');
     if (cb) {
       cb();
     }
