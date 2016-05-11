@@ -1,12 +1,14 @@
+require("babel-polyfill");
 var bodyParser = require('body-parser');
 var childProcess = require('child_process');
 var express = require('express');
-var fs = require('fs');
 var proxy = require('express-http-proxy');
 var spawn = childProcess.spawn;
 var ServiceManager = require('./service_manager');
 var app = express();
 var config = require('./config');
+var promisify = require("promisify-node");
+var fs = promisify("fs");
 
 function startLivelyServerInBackground() {
   var livelyServerPath = './node_modules/lively4-server/httpServer.js';
@@ -56,18 +58,17 @@ function start(cb) {
   });
 
   app.get('/start', function(req, res) {
-    ServiceManager.createScript('testScript.js', 'setInterval(function() {console.log("test"); }, 1000 );');
-    ServiceManager.spawnProcess('testScript.js');
-    ServiceManager.startDebugServer();
-    return res.json({ status: 'success' });
+    ServiceManager.createScript('testScript', 'setInterval(function() {console.log("test"); }, 1000 );').then(function() {
+      ServiceManager.spawnProcess('testScript');
+      ServiceManager.startDebugServer();
+      res.json({ status: 'success' });
+    });
   });
   app.get('/stop', function(req, res) {
     ServiceManager.shutdownDebugServer();
     return res.send('stopped');
   });
-  console.log("app.get(list)");
   app.get('/list', function(req, res) {
-    console.log("serve list");
     var response = JSON.parse(JSON.stringify(ServiceManager.listProcesses(), function(k, v) {
       if (k === 'child') {
         return undefined;
@@ -77,14 +78,23 @@ function start(cb) {
     return res.json(response);
   });
   app.get('/get', function(req, res) {
-    return res.json(ServiceManager.getProcessInfo(req.query.serviceName));
+    return ServiceManager.getProcessInfo(req.query.serviceName).then(function(json) {
+      json = JSON.parse(JSON.stringify(json, function(k, v) {
+        if (k === 'child') {
+          return undefined;
+        }
+        return v;
+      }));
+      return res.json(json);
+    });
   });
 
   app.post('/start', function(req, res) {
     var service = req.body;
-    ServiceManager.createScript(service.name, service.code);
-    ServiceManager.spawnProcess(service.name);
-    return res.json({ status: 'success' });
+    ServiceManager.createScript(service.name, service.code).then(function() {
+      ServiceManager.spawnProcess(service.name);
+      res.json({ status: 'success' });
+    });
   });
 
   app.post('/stop', function(req, res) {

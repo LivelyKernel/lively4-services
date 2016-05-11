@@ -1,17 +1,17 @@
+require("babel-polyfill");
 var server = require('../index');
 var request = require('request');
-var rimraf = require('rimraf');
+var promisify = require("promisify-node");
+var rimraf = promisify('rimraf');
 
 var route = 'http://localhost:9007';
 
 describe('Server', function() {
   beforeAll(function(done) {
-    server.start(done);
+    Promise.all([rimraf('./services'), rimraf('./logs')]).then(function() {
+      server.start(done);
+    });
   });
-
-  afterAll(function(done) {
-    rimraf('./services', done);
-  })
 
   it('gets empty list', function(done) {
     request.get(
@@ -43,7 +43,7 @@ describe('Server', function() {
         expect(pids.length).toBe(1);
 
         var child = json[pids[0]];
-        expect(child.name).toBe('testScript.js');
+        expect(child.name).toBe('testScript');
         expect(child.status).toBe(1);
         expect(child.kill).toBe(-1);
 
@@ -51,6 +51,19 @@ describe('Server', function() {
       }
     );
   });
+
+  it('gets info of running service', function(done) {
+    request.get(
+      route + '/get?serviceName=testScript',
+      function (error, response, body) {
+        var json = JSON.parse(body);
+        expect(json.service.name).toBe('testScript');
+        expect(json.code).toBe('setInterval(function() {console.log("test"); }, 1000 );');
+        // expect(json.log).toBe(1);
+        done();
+      }
+    );
+  })
 
   it('kills test script', function(done) {
     request({
