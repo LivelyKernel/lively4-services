@@ -1,4 +1,4 @@
-require("babel-polyfill");
+require('babel-polyfill');
 var bodyParser = require('body-parser');
 var childProcess = require('child_process');
 var express = require('express');
@@ -7,8 +7,8 @@ var spawn = childProcess.spawn;
 var ServiceManager = require('./service_manager');
 var app = express();
 var config = require('./config');
-var promisify = require("promisify-node");
-var fs = promisify("fs");
+var promisify = require('promisify-node');
+var fs = promisify('fs');
 
 function startLivelyServerInBackground() {
   var livelyServerPath = './node_modules/lively4-server/httpServer.js';
@@ -21,10 +21,10 @@ function startLivelyServerInBackground() {
   err = fs.openSync('./logs/lively-server.log', 'a');
 
   LIVELY_SERVER = spawn('node', [
-    livelyServerPath,
-    '--port=' + config.LIVELY_SERVER_PORT,
-    '--directory=services'],
-  {
+      livelyServerPath,
+      '--port=' + config.LIVELY_SERVER_PORT,
+      '--directory=services'
+    ], {
     stdio: [ 'ignore', out, err ]
   });
 
@@ -69,23 +69,12 @@ function start(cb) {
     return res.send('stopped');
   });
   app.get('/list', function(req, res) {
-    var response = JSON.parse(JSON.stringify(ServiceManager.listProcesses(), function(k, v) {
-      if (k === 'child') {
-        return undefined;
-      }
-      return v;
-    }));
-    return res.json(response);
+    var list = ServiceManager.listProcesses();
+    return res.json(list);
   });
   app.get('/get', function(req, res) {
-    return ServiceManager.getProcessInfo(req.query.serviceName).then(function(json) {
-      json = JSON.parse(JSON.stringify(json, function(k, v) {
-        if (k === 'child') {
-          return undefined;
-        }
-        return v;
-      }));
-      return res.json(json);
+    return ServiceManager.getProcessInfo(req.query.serviceName).then(function(info) {
+      return res.json(info);
     });
   });
 

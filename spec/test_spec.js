@@ -37,7 +37,6 @@ describe('Server', function() {
     request.get(
       route + '/list',
       function (error, response, body) {
-        console.log('body', body)
         var json = JSON.parse(body);
         var pids = Object.keys(json);
         expect(pids.length).toBe(1);
@@ -59,7 +58,6 @@ describe('Server', function() {
         var json = JSON.parse(body);
         expect(json.service.name).toBe('testScript');
         expect(json.code).toBe('setInterval(function() {console.log("test"); }, 1000 );');
-        // expect(json.log).toBe(1);
         done();
       }
     );
