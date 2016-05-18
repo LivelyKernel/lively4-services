@@ -9,7 +9,7 @@ var fs = promisify('fs');
 var _ = require('lodash');
 
 var ServiceManager = {
-  getServiceWithoutChild(service) {
+  getServiceWithoutChild: function(service) {
     return _.omit(service, ['child']);
   },
   listProcesses: function() {
