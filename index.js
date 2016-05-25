@@ -10,6 +10,10 @@ var config = require('./config');
 var promisify = require('promisify-node');
 var fs = promisify('fs');
 
+process.on('unhandledRejection', function(reason, p){
+  console.log("Possibly Unhandled Rejection at: Promise ", p, " reason: ", reason);
+});
+
 function startLivelyServerInBackground() {
   var livelyServerPath = './node_modules/lively4-server/httpServer.js';
 
@@ -52,9 +56,14 @@ function start(cb) {
   app.use(function(req, res, next) {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Request-Method', '*');
-    res.header('Access-Control-Allow-Methods', 'OPTIONS, GET');
-    res.header('Access-Control-Allow-Headers', '*');
-    next();
+    res.header('Access-Control-Allow-Methods', '*');
+    res.header("Access-Control-Allow-Headers", "Content-Type");
+
+    if ('OPTIONS' == req.method) {
+      res.sendStatus(200);
+    } else {
+      next();
+    }
   });
 
   app.get('/start', function(req, res) {
@@ -63,10 +72,6 @@ function start(cb) {
       ServiceManager.startDebugServer();
       res.json({ status: 'success' });
     });
-  });
-  app.get('/stop', function(req, res) {
-    ServiceManager.shutdownDebugServer();
-    return res.send('stopped');
   });
   app.get('/list', function(req, res) {
     var list = ServiceManager.listProcesses();
@@ -80,6 +85,7 @@ function start(cb) {
 
   app.post('/start', function(req, res) {
     var service = req.body;
+    ServiceManager.killProcess(service.serviceName);
     ServiceManager.createScript(service.name, service.code).then(function() {
       ServiceManager.spawnProcess(service.name);
       res.json({ status: 'success' });
@@ -92,7 +98,7 @@ function start(cb) {
     return res.json({ status: 'success' });
   });
 
-  app.post('/delete', function(req, res) {
+  app.post('/remove', function(req, res) {
     var service = req.body;
     ServiceManager.removeProcess(service.name, function(err) {
       return res.send('removed');

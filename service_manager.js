@@ -8,6 +8,17 @@ var promisify = require('promisify-node');
 var fs = promisify('fs');
 var _ = require('lodash');
 
+var unusedDebugPort = 5000;
+
+function createDir(dir) {
+  return fs.mkdir(dir).catch(function(err) {
+    if (err && err.code === 'EEXIST') {
+      return;
+    }
+    throw new Error(err);
+  });
+}
+
 var ServiceManager = {
   getServiceWithoutChild: function(service) {
     return _.omit(service, ['child']);
@@ -28,16 +39,17 @@ var ServiceManager = {
     }.bind(this));
   },
   createScript: function(serviceName, fileContent) {
-    if (!fs.existsSync(config.servicesDir)){
-      fs.mkdirSync(config.servicesDir);
-    }
-    if (!fs.existsSync(config.logsDir)){
-      fs.mkdirSync(config.logsDir);
-    }
-
-    fs.mkdirSync(config.servicesDir + '/' + serviceName);
-    fs.mkdirSync(config.logsDir + '/' + serviceName);
-    return fs.writeFile(this.getFilepath(serviceName), fileContent);
+    var _this = this;
+    return Promise.all([
+      createDir(config.servicesDir).then(function() {
+        return createDir(config.servicesDir + '/' + serviceName);
+      }),
+      createDir(config.logsDir).then(function() {
+        return createDir(config.logsDir + '/' + serviceName);
+      })
+    ]).then(function() {
+      return fs.writeFile(_this.getFilepath(serviceName), fileContent)
+    });
   },
   getFilepath: function(serviceName) {
     return config.servicesDir + '/' + serviceName + '/index.js';
@@ -47,7 +59,8 @@ var ServiceManager = {
     var scriptPath = this.getFilepath(serviceName);
     var logFile = config.logsDir + '/' + serviceName + '/stdout.log';
     fs.writeFile(logFile, '');
-    var child = spawn('node', ['--debug', scriptPath], {
+    var debugPort = unusedDebugPort++;
+    var child = spawn('node', ['--debug=' + debugPort, scriptPath], {
       detached: true
     });
 
@@ -56,7 +69,8 @@ var ServiceManager = {
       status: 1,
       start: new Date().getTime(),
       kill: -1,
-      child: child
+      child: child,
+      debugPort: debugPort
     };
 
     child.stdout.on('data', function (data) {
@@ -107,7 +121,11 @@ var ServiceManager = {
     var inspectorPath = './node_modules/node-inspector/bin/inspector.js';
     debugServerChild = spawn(
       'node',
-      [inspectorPath, '--web-port', config.NODE_INSPECTOR_WEB_PORT, '--save-live-edit', 'true']
+      [
+        inspectorPath,
+        '--web-port', config.NODE_INSPECTOR_WEB_PORT,
+        '--save-live-edit', 'true',
+      ]
     );
     var child = debugServerChild;
     child.stdout.on('data', function (data) {

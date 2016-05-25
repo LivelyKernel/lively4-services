@@ -1,10 +1,10 @@
 require("babel-polyfill");
 var server = require('../index');
+var config = require('../config');
 var request = require('request');
 var promisify = require("promisify-node");
 var rimraf = promisify('rimraf');
-
-var route = 'http://localhost:9007';
+var route = 'http://localhost:' + config.PORT;
 
 describe('Server', function() {
   beforeAll(function(done) {
@@ -61,7 +61,17 @@ describe('Server', function() {
         done();
       }
     );
-  })
+  });
+
+  it('connects to the debug server', function(done) {
+    request.get(
+      'http://localhost:' + config.NODE_INSPECTOR_WEB_PORT,
+      function (error, response, body) {
+        expect(response.statusCode).toBe(200);
+        done();
+      }
+    );
+  });
 
   it('kills test script', function(done) {
     request({
@@ -92,10 +102,10 @@ describe('Server', function() {
     );
   });
 
-  it('deletes service', function(done) {
+  it('removes service', function(done) {
     var scriptName = 'createdScript';
     request({
-        url: route + '/delete',
+        url: route + '/remove',
         method: 'post',
         body: { name: scriptName },
         json: true
