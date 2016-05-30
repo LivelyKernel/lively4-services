@@ -48,7 +48,7 @@ var ServiceManager = {
         return createDir(config.logsDir + '/' + serviceName);
       })
     ]).then(function() {
-      return fs.writeFile(_this.getFilepath(serviceName), fileContent)
+      return fs.writeFile(_this.getFilepath(serviceName), fileContent);
     });
   },
   getFilepath: function(serviceName) {
@@ -60,9 +60,7 @@ var ServiceManager = {
     var logFile = config.logsDir + '/' + serviceName + '/stdout.log';
     fs.writeFile(logFile, '');
     var debugPort = unusedDebugPort++;
-    var child = spawn('node', ['--debug=' + debugPort, scriptPath], {
-      detached: true
-    });
+    var child = spawn('node', ['--debug=' + debugPort, scriptPath]);
 
     services[serviceName] = {
       name: serviceName,
@@ -117,7 +115,8 @@ var ServiceManager = {
       console.log('Debug server was already started.');
       return;
     }
-    console.log('run inspectorPath');
+    console.log('Starting debug server on port ' +
+                config.NODE_INSPECTOR_WEB_PORT+ '...');
     var inspectorPath = './node_modules/node-inspector/bin/inspector.js';
     debugServerChild = spawn(
       'node',

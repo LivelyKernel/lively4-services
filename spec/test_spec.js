@@ -9,7 +9,8 @@ var route = 'http://localhost:' + config.PORT;
 describe('Server', function() {
   beforeAll(function(done) {
     Promise.all([rimraf('./services'), rimraf('./logs')]).then(function() {
-      server.start(done);
+      server.start();
+      setTimeout(done, 500);  // wait for server to start
     });
   });
 

@@ -69,7 +69,6 @@ function start(cb) {
   app.get('/start', function(req, res) {
     ServiceManager.createScript('testScript', 'setInterval(function() {console.log("test"); }, 1000 );').then(function() {
       ServiceManager.spawnProcess('testScript');
-      ServiceManager.startDebugServer();
       res.json({ status: 'success' });
     });
   });
@@ -107,6 +106,7 @@ function start(cb) {
 
   app.listen(config.PORT, function () {
     startLivelyServerInBackground();
+    ServiceManager.startDebugServer();
     console.log('Listening on port ' + config.PORT + '...');
     if (cb) {
       cb();
