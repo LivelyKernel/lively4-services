@@ -9,6 +9,7 @@ var fs = promisify('fs');
 var _ = require('lodash');
 
 var unusedDebugPort = 5000;
+var serviceIDs = 0;
 
 function createDir(dir) {
   return fs.mkdir(dir).catch(function(err) {
@@ -20,56 +21,65 @@ function createDir(dir) {
 }
 
 var ServiceManager = {
+  serviceExists: function(serviceID) {
+    return serviceID in services;
+  },
   getServiceWithoutChild: function(service) {
     return _.omit(service, ['child']);
   },
   listProcesses: function() {
     return _.mapValues(services, this.getServiceWithoutChild);
   },
-  getProcessInfo: function(serviceName) {
+  getProcessInfo: function(serviceID) {
     return Promise.all([
-      fs.readFile(this.getFilepath(serviceName), 'utf8'),
-      fs.readFile(config.logsDir + '/' + serviceName + '/stdout.log', 'utf8')
+      fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8')
     ]).then(function(codeAndLog) {
       return {
-        service: this.getServiceWithoutChild(services[serviceName]),
-        code: codeAndLog[0],
-        log: codeAndLog[1]
+        service: this.getServiceWithoutChild(services[serviceID]),
+        log: codeAndLog[0]
       };
     }.bind(this));
   },
-  createScript: function(serviceName, fileContent) {
-    var _this = this;
-    return Promise.all([
-      createDir(config.servicesDir).then(function() {
-        return createDir(config.servicesDir + '/' + serviceName);
-      }),
-      createDir(config.logsDir).then(function() {
-        return createDir(config.logsDir + '/' + serviceName);
-      })
-    ]).then(function() {
-      return fs.writeFile(_this.getFilepath(serviceName), fileContent);
+  addService: function(entryPoint) {
+    var serviceID = serviceIDs++;
+    services[serviceID] = {
+      id: serviceID,
+      status: 0,
+      start: -1,
+      kill: -1,
+      child: null,
+      debugPort: null,
+      entryPoint: entryPoint
+    };
+    createDir(config.logsDir).then(function() {
+      createDir(config.logsDir + '/' + serviceID);
     });
+    return serviceID;
   },
-  getFilepath: function(serviceName) {
-    return config.servicesDir + '/' + serviceName + '/index.js';
+  getFilepath: function(serviceID) {
+    return config.servicesDir + '/' + serviceID + '/index.js';
   },
-  spawnProcess: function(serviceName) {
+  spawnProcess: function(serviceID) {
     console.log('spawn the shell');
-    var scriptPath = this.getFilepath(serviceName);
-    var logFile = config.logsDir + '/' + serviceName + '/stdout.log';
+
+    if (!this.serviceExists(serviceID)) {
+      throw new Error('Service #' + serviceID + ' not found.');
+    }
+
+    var service = services[serviceID];
+    var serviceFile =  config.servicesDir + '/' + service.entryPoint;
+    var logFile = config.logsDir + '/' + serviceID + '/stdout.log';
     fs.writeFile(logFile, '');
     var debugPort = unusedDebugPort++;
-    var child = spawn('node', ['--debug=' + debugPort, scriptPath]);
+    var child = spawn('node', ['--debug=' + debugPort, serviceFile]);
+    
 
-    services[serviceName] = {
-      name: serviceName,
-      status: 1,
-      start: new Date().getTime(),
-      kill: -1,
-      child: child,
-      debugPort: debugPort
-    };
+    service.start = new Date().getTime();
+    service.status = 1;
+    service.child = child;
+    service.debugPort = debugPort;
+
+    services[serviceID] = service;
 
     child.stdout.on('data', function (data) {
       fs.appendFile(logFile, data.toString());
@@ -82,7 +92,7 @@ var ServiceManager = {
     });
 
     child.on('close', function(exit_code) {
-      var runningService = services[serviceName];
+      var runningService = services[serviceID];
       if (runningService) {
         runningService.status = 0;
         runningService.kill = new Date().getTime();
@@ -93,8 +103,8 @@ var ServiceManager = {
 
     return child.pid;
   },
-  killProcess: function(serviceName) {
-    var runningService = services[serviceName];
+  killProcess: function(serviceID) {
+    var runningService = services[serviceID];
     if (runningService) {
       console.log('kill process');
       runningService.child.kill('SIGKILL');
@@ -102,13 +112,12 @@ var ServiceManager = {
       runningService.kill = new Date().getTime();
     }
   },
-  removeProcess: function(serviceName, cb) {
-    var runningService = services[serviceName];
+  removeProcess: function(serviceID, cb) {
+    var runningService = services[serviceID];
     if (runningService) {
-      this.killProcess(serviceName);
-      delete services[serviceName];
+      this.killProcess(serviceID);
+      delete services[serviceID];
     }
-    rimraf(config.servicesDir + '/serviceName', cb);
   },
   startDebugServer: function() {
     if (debugServerChild) {

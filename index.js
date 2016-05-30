@@ -66,34 +66,31 @@ function start(cb) {
     }
   });
 
-  app.get('/start', function(req, res) {
-    ServiceManager.createScript('testScript', 'setInterval(function() {console.log("test"); }, 1000 );').then(function() {
-      ServiceManager.spawnProcess('testScript');
-      res.json({ status: 'success' });
-    });
-  });
   app.get('/list', function(req, res) {
     var list = ServiceManager.listProcesses();
     return res.json(list);
   });
-  app.get('/get', function(req, res) {
-    return ServiceManager.getProcessInfo(req.query.serviceName).then(function(info) {
+  app.post('/get', function(req, res) {
+    var service = req.body;
+    return ServiceManager.getProcessInfo(service.id).then(function(info) {
       return res.json(info);
     });
   });
 
   app.post('/start', function(req, res) {
     var service = req.body;
-    ServiceManager.killProcess(service.serviceName);
-    ServiceManager.createScript(service.name, service.code).then(function() {
-      ServiceManager.spawnProcess(service.name);
-      res.json({ status: 'success' });
-    });
+    if (service.id !== undefined && ServiceManager.serviceExists(service.id)) {
+      ServiceManager.killProcess(service.id);
+    } else {
+      service.id = ServiceManager.addService(service.entryPoint);
+    }
+    ServiceManager.spawnProcess(service.id);
+    return res.json({ status: 'success' });
   });
 
   app.post('/stop', function(req, res) {
     var service = req.body;
-    ServiceManager.killProcess(service.serviceName);
+    ServiceManager.killProcess(service.id);
     return res.json({ status: 'success' });
   });
 
