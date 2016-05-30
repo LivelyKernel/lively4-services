@@ -31,6 +31,9 @@ var ServiceManager = {
     return _.mapValues(services, this.getServiceWithoutChild);
   },
   getProcessInfo: function(serviceID) {
+    if (!this.serviceExists(serviceID)) {
+      return Promise.reject('Service #' + serviceID + ' does not exist.');
+    }
     return Promise.all([
       fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8')
     ]).then(function(codeAndLog) {
@@ -41,6 +44,9 @@ var ServiceManager = {
     }.bind(this));
   },
   addService: function(entryPoint) {
+    if (!fs.existsSync(config.servicesDir + '/' + entryPoint)) {
+      return null;
+    }
     var serviceID = serviceIDs++;
     services[serviceID] = {
       id: serviceID,

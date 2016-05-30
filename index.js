@@ -83,6 +83,9 @@ function start(cb) {
       ServiceManager.killProcess(service.id);
     } else {
       service.id = ServiceManager.addService(service.entryPoint);
+      if (service.id === null) {
+        return res.json({ status: 'failed' });
+      }
     }
     ServiceManager.spawnProcess(service.id);
     return res.json({ status: 'success' });
