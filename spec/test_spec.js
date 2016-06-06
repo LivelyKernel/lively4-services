@@ -81,7 +81,7 @@ describe('Server', function() {
         },
         function (error, response, json) {
           expect(json.service.entryPoint).toBe('test/index.js');
-          expect(json.log).toContain('Debugger listening on port');
+          expect(json.log.toLowerCase()).toContain('debugger listening on port');
           expect(json.log).toContain('start');
           done();
         }
