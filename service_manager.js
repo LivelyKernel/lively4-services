@@ -34,12 +34,10 @@ var ServiceManager = {
     if (!this.serviceExists(serviceID)) {
       return Promise.reject('Service #' + serviceID + ' does not exist.');
     }
-    return Promise.all([
-      fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8')
-    ]).then(function(codeAndLog) {
+    return fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8').then(function(log) {
       return {
         service: this.getServiceWithoutChild(services[serviceID]),
-        log: codeAndLog[0]
+        log: log
       };
     }.bind(this));
   },

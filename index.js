@@ -103,7 +103,7 @@ function start(cb) {
 
   app.post('/remove', function(req, res) {
     var service = req.body;
-    ServiceManager.removeProcess(service.name);
+    ServiceManager.removeProcess(service.id);
     return res.json({ status: 'success'});
   });
 
