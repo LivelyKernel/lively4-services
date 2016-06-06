@@ -45,7 +45,7 @@ var ServiceManager = {
   },
   addService: function(entryPoint) {
     if (!fs.existsSync(config.servicesDir + '/' + entryPoint)) {
-      return null;
+      return Promise.reject("Entry point doesn't exist");
     }
     var serviceID = serviceIDs++;
     services[serviceID] = {
@@ -57,17 +57,16 @@ var ServiceManager = {
       debugPort: null,
       entryPoint: entryPoint
     };
-    createDir(config.logsDir).then(function() {
-      createDir(config.logsDir + '/' + serviceID);
+    return createDir(config.logsDir).then(function() {
+      return createDir(config.logsDir + '/' + serviceID);
+    }).then(function() {
+      return serviceID;
     });
-    return serviceID;
   },
   getFilepath: function(serviceID) {
     return config.servicesDir + '/' + serviceID + '/index.js';
   },
   spawnProcess: function(serviceID) {
-    console.log('spawn the shell');
-
     if (!this.serviceExists(serviceID)) {
       throw new Error('Service #' + serviceID + ' not found.');
     }
@@ -78,7 +77,7 @@ var ServiceManager = {
     fs.writeFile(logFile, '');
     var debugPort = unusedDebugPort++;
     var child = spawn('node', ['--debug=' + debugPort, serviceFile]);
-    
+
 
     service.start = new Date().getTime();
     service.status = 1;

@@ -15,8 +15,6 @@ process.on('unhandledRejection', function(reason, p){
 });
 
 function startLivelyServerInBackground() {
-  var livelyServerPath = './node_modules/lively4-server/httpServer.js';
-
   if (!fs.existsSync(config.logsDir)){
     fs.mkdirSync(config.logsDir);
   }
@@ -24,15 +22,15 @@ function startLivelyServerInBackground() {
   out = fs.openSync('./logs/lively-server.log', 'a');
   err = fs.openSync('./logs/lively-server.log', 'a');
 
-  LIVELY_SERVER = spawn('node', [
-      livelyServerPath,
+  var livelyServerProcess = spawn('node', [
+      config.LIVELY_SERVER_PATH,
       '--port=' + config.LIVELY_SERVER_PORT,
       '--directory=services'
     ], {
     stdio: [ 'ignore', out, err ]
   });
 
-  console.log('lively-server (#' + LIVELY_SERVER.pid + ') is listenting on ' +
+  console.log('lively-server (#' + livelyServerProcess.pid + ') is listenting on ' +
               config.LIVELY_SERVER_PORT + '...');
 }
 
@@ -70,6 +68,7 @@ function start(cb) {
     var list = ServiceManager.listProcesses();
     return res.json(list);
   });
+
   app.post('/get', function(req, res) {
     var service = req.body;
     return ServiceManager.getProcessInfo(service.id).then(function(info) {
@@ -79,16 +78,21 @@ function start(cb) {
 
   app.post('/start', function(req, res) {
     var service = req.body;
+    var promise;
     if (service.id !== undefined && ServiceManager.serviceExists(service.id)) {
       ServiceManager.killProcess(service.id);
+      promise = Promise.resolve();
     } else {
-      service.id = ServiceManager.addService(service.entryPoint);
-      if (service.id === null) {
-        return res.json({ status: 'failed' });
-      }
+      promise = ServiceManager.addService(service.entryPoint).then(function(id) {
+        service.id = id;
+      });
     }
-    ServiceManager.spawnProcess(service.id);
-    return res.json({ status: 'success' });
+    promise.then(function() {
+      ServiceManager.spawnProcess(service.id);
+      res.json({ status: 'success' });
+    }).catch(function(error) {
+      res.json({ status: 'failed', message: error });
+    });
   });
 
   app.post('/stop', function(req, res) {
@@ -99,9 +103,8 @@ function start(cb) {
 
   app.post('/remove', function(req, res) {
     var service = req.body;
-    ServiceManager.removeProcess(service.name, function(err) {
-      return res.send('removed');
-    });
+    ServiceManager.removeProcess(service.name);
+    return res.json({ status: 'success'});
   });
 
   app.listen(config.PORT, function () {

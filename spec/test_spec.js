@@ -9,8 +9,9 @@ var route = 'http://localhost:' + config.PORT;
 describe('Server', function() {
   beforeAll(function(done) {
     Promise.all([rimraf('./services'), rimraf('./logs')]).then(function() {
-      server.start();
-      setTimeout(done, 500);  // wait for server to start
+      server.start(function() {
+        setTimeout(done, 500);  // wait for server to start
+      });
     });
   });
 
@@ -112,7 +113,7 @@ describe('Server', function() {
         json: true
       },
       function (error, response, body) {
-        expect(body).toBe('removed');
+        expect(body).toEqual({ status: 'success' });
         done();
       }
     );
