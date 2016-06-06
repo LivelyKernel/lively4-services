@@ -7,7 +7,7 @@ var debugServerChild = null;
 var promisify = require('promisify-node');
 var fs = promisify('fs');
 var _ = require('lodash');
-
+var forever = require('forever-monitor');
 var unusedDebugPort = 5000;
 var serviceIDs = 0;
 
@@ -129,26 +129,42 @@ var ServiceManager = {
     }
     console.log('Starting debug server on port ' +
                 config.NODE_INSPECTOR_WEB_PORT+ '...');
+
     var inspectorPath = './node_modules/node-inspector/bin/inspector.js';
-    debugServerChild = spawn(
-      'node',
-      [
-        inspectorPath,
-        '--web-port', config.NODE_INSPECTOR_WEB_PORT,
-        '--save-live-edit', 'true',
-      ]
+
+    var child = new (forever.Monitor)(
+      inspectorPath,
+      {
+        max : 100,
+        silent : true,
+        args: [
+          '--web-port', config.NODE_INSPECTOR_WEB_PORT,
+          '--save-live-edit', 'true'
+        ]
+      }
     );
-    var child = debugServerChild;
-    child.stdout.on('data', function (data) {
+
+    child.start();
+
+    debugServerChild = child;
+    child.on('restart', function() {
+      console.log("Debug server was restarted automatically");
+    })
+
+    child.on('stdout', function (data) {
       console.log(child.pid, data.toString());
     });
 
-    child.stderr.on('data', function (data) {
+    child.on('stderr', function (data) {
       console.log(child.pid, data.toString());
     });
 
-    child.on('close', function(exit_code) {
+    child.on('exit', function(exit_code) {
       console.log('Closed before stop: Closing code: ', exit_code);
+    });
+
+    process.on('exit', function() {
+      debugServerChild.kill('SIGKILL');
     });
   },
   shutdownDebugServer: function() {
