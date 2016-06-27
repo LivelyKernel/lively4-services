@@ -149,14 +149,14 @@ var ServiceManager = {
     debugServerChild = child;
     child.on('restart', function() {
       console.log("Debug server was restarted automatically");
-    })
+    });
 
     child.on('stdout', function (data) {
-      console.log(child.pid, data.toString());
+      console.log('inspector > ', data.toString());
     });
 
     child.on('stderr', function (data) {
-      console.log(child.pid, data.toString());
+      console.log('inspector > ', data.toString());
     });
 
     child.on('exit', function(exit_code) {
