@@ -47,7 +47,7 @@ var ServiceManager = {
   },
   addService: function(entryPoint) {
     if (!fs.existsSync(config.servicesDir + '/' + entryPoint)) {
-      return Promise.reject("Entry point doesn't exist");
+      return Promise.reject("Entry point doesn't exist: " + entryPoint);
     }
     var serviceID = serviceIDs++;
     services[serviceID] = {

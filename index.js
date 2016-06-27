@@ -73,6 +73,8 @@ function start(cb) {
     var service = req.body;
     return ServiceManager.getProcessInfo(service.id).then(function(info) {
       return res.json(info);
+    }).catch(function(error) {
+      res.json({ status: 'failed', message: error });
     });
   });
 
