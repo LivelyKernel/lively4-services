@@ -34,10 +34,14 @@ var ServiceManager = {
     if (!this.serviceExists(serviceID)) {
       return Promise.reject('Service #' + serviceID + ' does not exist.');
     }
-    return fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8').then(function(log) {
+    return Promise.all([
+      fs.readFile(config.logsDir + '/' + serviceID + '/stdout.log', 'utf8'),
+      fs.readFile(config.logsDir + '/' + serviceID + '/stderr.log', 'utf8')
+    ]).then(function(logs) {
       return {
         service: this.getServiceWithoutChild(services[serviceID]),
-        log: log
+        stdout: logs[0],
+        stderr: logs[1]
       };
     }.bind(this));
   },
@@ -71,8 +75,10 @@ var ServiceManager = {
 
     var service = services[serviceID];
     var serviceFile =  config.servicesDir + '/' + service.entryPoint;
-    var logFile = config.logsDir + '/' + serviceID + '/stdout.log';
-    fs.writeFile(logFile, '');
+    var stdoutFile = config.logsDir + '/' + serviceID + '/stdout.log';
+    var stderrFile = config.logsDir + '/' + serviceID + '/stderr.log';
+    fs.writeFile(stdoutFile, '');
+    fs.writeFile(stderrFile, '');
     var debugPort = unusedDebugPort++;
     var child = spawn('node', ['--debug=' + debugPort, serviceFile]);
 
@@ -85,12 +91,12 @@ var ServiceManager = {
     services[serviceID] = service;
 
     child.stdout.on('data', function (data) {
-      fs.appendFile(logFile, data.toString());
+      fs.appendFile(stdoutFile, data.toString());
       console.log(child.pid, data.toString());
     });
 
     child.stderr.on('data', function (data) {
-      fs.appendFile(logFile, data.toString());
+      fs.appendFile(stderrFile, data.toString());
       console.log(child.pid, data.toString());
     });
 
@@ -149,7 +155,7 @@ var ServiceManager = {
     debugServerChild = child;
     child.on('restart', function() {
       console.log("Debug server was restarted automatically");
-    })
+    });
 
     child.on('stdout', function (data) {
       console.log(child.pid, data.toString());
