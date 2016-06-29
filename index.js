@@ -91,7 +91,7 @@ function start(cb) {
     }
     promise.then(function() {
       ServiceManager.spawnProcess(service.id);
-      res.json({ status: 'success' });
+      res.json({ status: 'success', pid: service.id });
     }).catch(function(error) {
       res.json({ status: 'failed', message: error });
     });
