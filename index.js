@@ -9,6 +9,7 @@ var app = express();
 var config = require('./config');
 var promisify = require('promisify-node');
 var fs = promisify('fs');
+var gitClone = require('git-clone');
 
 process.on('unhandledRejection', function(reason, p){
   console.log("Possibly Unhandled Rejection at: Promise ", p, " reason: ", reason);
@@ -94,6 +95,18 @@ function start(cb) {
       res.json({ status: 'success', pid: service.id });
     }).catch(function(error) {
       res.json({ status: 'failed', message: error });
+    });
+  });
+
+  app.post('/clone', function(req, res) {
+    var repoUrl = req.body.url;
+    var repoName = repoUrl.split("/").slice(-1)[0].split(".git")[0];
+    gitClone(repoUrl, config.servicesDir + "/" + repoName, function(error) {
+      if (error) {
+        res.json({status: 'failed', message: error});
+      } else {
+        res.json({ status: 'success'});
+      }
     });
   });
 
