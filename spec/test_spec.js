@@ -46,7 +46,7 @@ describe('Server', function() {
           json: true
         },
         function (error, response, body) {
-          expect(body).toEqual({ status: 'success' });
+          expect(body).toEqual({ status: 'success', pid: 0 });
           done();
         }
       );
@@ -81,8 +81,8 @@ describe('Server', function() {
         },
         function (error, response, json) {
           expect(json.service.entryPoint).toBe('test/index.js');
-          expect(json.log.toLowerCase()).toContain('debugger listening on port');
-          expect(json.log).toContain('start');
+          expect(json.stdout).toContain('start');
+          expect(json.stderr.toLowerCase()).toContain('debugger listening on port');
           done();
         }
       );
