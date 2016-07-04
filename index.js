@@ -49,7 +49,6 @@ function dispatch(req, res) {
     return;
   } else if (req.url.indexOf("/debug/") === 0) {
     req.url = req.url.substr('/debug'.length, req.url.length);
-    console.log('Proxy debug', req.url);
     proxy.web(req, res, {
       target: 'http://localhost:' + config.NODE_INSPECTOR_WEB_PORT
     });
@@ -65,7 +64,6 @@ function dispatch(req, res) {
       notFound(res);      
     }
   } else if (req.method === "POST") {
-    console.log('POST', req.url);
     var body = [];
     req.on('data', function(chunk) {
       body.push(chunk);
@@ -73,13 +71,9 @@ function dispatch(req, res) {
       body = Buffer.concat(body).toString();
       try {
         var data = JSON.parse(body);
-        console.log(data);
-
         if (req.url === "/get") {
-          console.log('/GET');
           postGet(req, res, data);
         } else if (req.url === "/start") {
-          console.log('/start');
           postStart(req, res, data);
         } else if (req.url === "/clone") {
           postClone(req, res, data);
@@ -161,7 +155,6 @@ function jsonResponse(res, obj) {
 }
 
 app.on('upgrade', function (req, socket, head) {
-  console.log("proxying upgrade request", req.url);
   proxy.ws(req, socket, head, {
       target: 'ws://localhost:' + config.NODE_INSPECTOR_WEB_PORT
     });
