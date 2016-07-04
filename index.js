@@ -125,11 +125,22 @@ function postStart(req, res, data) {
 function postClone(req, res, data) {
   var repoUrl = data.url;
   var repoName = repoUrl.split("/").slice(-1)[0].split(".git")[0];
-  gitClone(repoUrl, config.servicesDir + "/" + repoName, function(error) {
+  var dirName = config.servicesDir + "/" + repoName;
+  gitClone(repoUrl, dirName, function(error) {
     if (error) {
       jsonResponse(res, { status: 'failed', message: error });
     } else {
-      jsonResponse(res, { status: 'success'});
+      var npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+      var npmInstall = spawn(npm, ["install"], {cwd : dirName});
+      npmInstall.stdout.on('data', function(data) {
+        console.log(data.toString());
+      });
+      npmInstall.stderr.on('data', function(data) {
+        console.log(data.toString());
+      });
+      npmInstall.on('close', function(exitCode) {
+        jsonResponse(res, { status: 'success'});
+      });
     }
   });
 }

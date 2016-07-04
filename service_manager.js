@@ -100,17 +100,15 @@ var ServiceManager = {
       console.log(child.pid, data.toString());
     });
 
-    child.on('close', function(exit_code) {
+    child.on('close', function(exitCode) {
       var runningService = services[serviceID];
       if (runningService) {
         runningService.status = 0;
         runningService.kill = new Date().getTime();
       }
 
-      console.log('Closed before stop: Closing code: ', exit_code);
+      console.log('Closed before stop: Closing code: ', exitCode);
     });
-
-    return child.pid;
   },
   killProcess: function(serviceID) {
     var runningService = services[serviceID];
@@ -165,8 +163,8 @@ var ServiceManager = {
       console.log('inspector > ', data.toString());
     });
 
-    child.on('exit', function(exit_code) {
-      console.log('Closed before stop: Closing code: ', exit_code);
+    child.on('exit', function(exitCode) {
+      console.log('Closed before stop: Closing code: ', exitCode);
     });
 
     process.on('exit', function() {
