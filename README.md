@@ -4,3 +4,4 @@ Development, deployment and run-time programming of stand-alone services from Li
 
 
 [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/LivelyKernel/lively4-services/tree/master)
+[![Deploy to Bluemix](https://bluemix.net/deploy/button.png)](https://bluemix.net/deploy?repository=https://github.com/LivelyKernel/lively4-services)
