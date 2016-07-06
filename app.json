@@ -1,0 +1,13 @@
+{
+  "name": "lively4-services",
+  "description": "Development, deployment and run-time programming of stand-alone services from Lively4",
+  "logo": "https://www.lively-kernel.org/media/livelylogo-small.png",
+  "repository": "https://github.com/LivelyKernel/lively4-services",
+  "keywords": ["node", "lively-kernel"],
+  "env": {
+    "LK4_SERVICES_PORT": {
+      "description": "Port to listen on",
+      "required": false
+    }
+  }
+}
