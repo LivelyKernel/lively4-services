@@ -131,7 +131,7 @@ function postClone(req, res, data) {
       jsonResponse(res, { status: 'failed', message: error });
     } else {
       var npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-      var npmInstall = spawn(npm, ["install"], {cwd : dirName});
+      var npmInstall = spawn(npm, ["install", "--dev"], {cwd : dirName});
       npmInstall.stdout.on('data', function(data) {
         console.log(data.toString());
       });
