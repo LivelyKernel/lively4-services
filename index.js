@@ -47,10 +47,25 @@ function dispatch(req, res) {
       target: 'http://localhost:' + config.LIVELY_SERVER_PORT
     });
     return;
-  } else if (req.url.indexOf("/debug/") === 0) {
+  }
+
+  if (req.url.indexOf("/debug/") === 0) {
     req.url = req.url.substr('/debug'.length, req.url.length);
     proxy.web(req, res, {
       target: 'http://localhost:' + config.NODE_INSPECTOR_WEB_PORT
+    });
+    return;
+  }
+
+  var matcher = /\/port\/([0-9]+)(\/.*)/;
+  var matches = matcher.exec(req.url);
+  if (matches) {
+    var port = matches[1];
+    var restUrl = matches[2];
+
+    req.url = restUrl;
+    proxy.web(req, res, {
+      target: 'http://localhost:' + parseInt(port)
     });
     return;
   }
@@ -61,7 +76,7 @@ function dispatch(req, res) {
     } else if (req.url === "/list") {
       return jsonResponse(res, ServiceManager.listProcesses());
     } else {
-      notFound(res);      
+      notFound(res);
     }
   } else if (req.method === "POST") {
     var body = [];
