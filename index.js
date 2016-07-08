@@ -10,6 +10,7 @@ var config = require('./config');
 var promisify = require('promisify-node');
 var fs = promisify('fs');
 var gitClone = require('git-clone');
+var portForwardMatcher = /\/port\/([0-9]+)(\/.*)/;
 
 process.on('unhandledRejection', function(reason, p){
   console.log("Possibly Unhandled Rejection at: Promise ", p, " reason: ", reason);
@@ -57,13 +58,10 @@ function dispatch(req, res) {
     return;
   }
 
-  var matcher = /\/port\/([0-9]+)(\/.*)/;
-  var matches = matcher.exec(req.url);
+  var matches = portForwardMatcher.exec(req.url);
   if (matches) {
     var port = matches[1];
-    var restUrl = matches[2];
-
-    req.url = restUrl;
+    req.url = matches[2];
     proxy.web(req, res, {
       target: 'http://localhost:' + parseInt(port)
     });
@@ -181,6 +179,15 @@ function jsonResponse(res, obj) {
 }
 
 app.on('upgrade', function (req, socket, head) {
+  var matches = portForwardMatcher.exec(req.url);
+  if (matches) {
+    var port = matches[1];
+    req.url = matches[2];
+    proxy.ws(req, socket, head, {
+      target: 'ws://localhost:' + parseInt(port)
+    });
+    return;
+  }
   proxy.ws(req, socket, head, {
       target: 'ws://localhost:' + config.NODE_INSPECTOR_WEB_PORT
     });
