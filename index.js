@@ -42,8 +42,8 @@ function dispatch(req, res) {
   res.setHeader('Access-Control-Request-Method', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
 
-  if (req.url.indexOf("/lively/") === 0) {
-    req.url = req.url.substr('/lively'.length, req.url.length);
+  if (req.url.indexOf("/mount/") === 0) {
+    req.url = req.url.substr('/mount'.length, req.url.length);
     proxy.web(req, res, {
       target: 'http://localhost:' + config.LIVELY_SERVER_PORT
     });
