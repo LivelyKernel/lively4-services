@@ -17,6 +17,7 @@ process.on('unhandledRejection', function(reason, p){
 });
 
 function startLivelyServerInBackground() {
+  console.log("start lively server")
   if (!fs.existsSync(config.logsDir)){
     fs.mkdirSync(config.logsDir);
   }
