@@ -28,7 +28,10 @@ function startLivelyServerInBackground() {
   var livelyServerProcess = spawn('node', [
       config.LIVELY_SERVER_PATH,
       '--port=' + config.LIVELY_SERVER_PORT,
-      '--directory=services'
+      '--directory=services',
+      '--server='+config.LIVELY_SERVER_DIR,
+      '--auto-commit=true',
+      '--index-files=false'
     ], {
     stdio: [ 'ignore', out, err ]
   });
