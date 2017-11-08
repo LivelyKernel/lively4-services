@@ -103,6 +103,7 @@ function dispatch(req, res) {
         }
       } catch (ex) {
         console.error(ex);
+        console.log("body: " + body)
       }
    });
   } else if (req.method === "OPTIONS") {
