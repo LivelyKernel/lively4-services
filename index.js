@@ -22,8 +22,8 @@ function startLivelyServerInBackground() {
     fs.mkdirSync(config.logsDir);
   }
 
-  out = fs.openSync('./logs/lively-server.log', 'a');
-  err = fs.openSync('./logs/lively-server.log', 'a');
+  out = fs.openSync(config.logsDir + '/lively-server.log', 'a');
+  err = fs.openSync(config.logsDir + '/lively-server.log', 'a');
 
   var livelyServerProcess = spawn('node', [
       config.LIVELY_SERVER_PATH,
